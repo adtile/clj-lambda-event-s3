@@ -15,7 +15,7 @@
   {:e-tag String
    :sequencer String
    :key String
-   :size Long })
+   :size schema/Num })
 
 (schema/defschema S3BucketSchema
   {:arn String
