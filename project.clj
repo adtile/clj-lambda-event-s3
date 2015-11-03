@@ -1,4 +1,4 @@
-(defproject clj-lambda-event-s3 "0.1.3"
+(defproject clj-lambda-event-s3 "0.1.4"
   :description "A Clojure library designed for parsing AWS Lambda S3 events"
   :url "https://github.com/adtile/clj-lambda-event-s3"
   :license {:name "MIT"}
