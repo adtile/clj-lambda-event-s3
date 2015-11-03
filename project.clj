@@ -4,7 +4,7 @@
   :license {:name "MIT"}
   :signing {:gpg-key "webmaster@adtile.me"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [amazonica/amazonica "0.3.37"
+                 [amazonica/amazonica "0.3.39"
                   :exclusions [com.amazonaws/amazon-kinesis-client
                                com.amazonaws/aws-java-sdk-autoscaling
                                com.amazonaws/aws-java-sdk-cloudformation
