@@ -1,5 +1,7 @@
 # clj-lambda-event-s3
 
+https://travis-ci.org/adtile/clj-lambda-event-s3.svg?branch=master
+
 A Clojure library designed for parsing AWS Lambda S3 events.
 
 ## License
