@@ -1,0 +1,6 @@
+version: "2"
+services:
+  s3rver:
+    image: adtile/s3rver:latest
+    ports:
+      - "4568:4568"
