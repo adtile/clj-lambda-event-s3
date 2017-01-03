@@ -3,30 +3,19 @@
             [clj-containment-matchers.clojure-test :refer :all]
             [clojure.java.io :as io]
             [lambda-event-s3.s3 :as s3])
-  (:import [com.amazonaws.auth BasicAWSCredentials]
-           [com.amazonaws.services.s3 AmazonS3 AmazonS3Client S3ClientOptions]
-           [java.util UUID]))
+  (:import [java.util UUID]))
 
-(defonce client
-  (let [credentials (BasicAWSCredentials. "YOUR_ACCESS_KEY_ID" "YOUR_SECRET_ACCESS_KEY")
-        client-options (-> (S3ClientOptions/builder)
-                           (.setPathStyleAccess true)
-                           (.build))
-        client (-> (AmazonS3Client. credentials)
-                   (.withEndpoint "http://localhost:4568"))]
-    (.setS3ClientOptions client client-options)
-    client))
+(defonce client (s3/create-client))
+(def bucket "adtile-ci-aws-sandbox-development")
+(def file-key (str "lambda-event-s3/" (UUID/randomUUID) ".txt"))
+(defonce sample-file (delay (io/file (io/resource "sample.txt"))))
 
-(def bucket (str (UUID/randomUUID)))
-(def file-key "sample.json")
-(defonce sample-file (delay (io/file (io/resource "sample.json"))))
-
-(defn- prepare-fake-s3 [suite]
-  (.createBucket client bucket)
+(defn- prepare-s3 [suite]
   (.putObject client bucket file-key @sample-file)
-  (suite))
+  (suite)
+  (.deleteObject client bucket file-key))
 
-(use-fixtures :once prepare-fake-s3)
+(use-fixtures :once prepare-s3)
 
 (def sample-source-event
   {:aws-region "ap-southeast-2"
@@ -46,12 +35,13 @@
   {:bucket-name bucket
    :content #(instance? com.amazonaws.services.s3.model.S3ObjectInputStream %1)
    :content-length number?
-   :content-type "application/octet-stream"
+   :content-type "text/plain"
    :last-modified #(instance? org.joda.time.DateTime %1)
    :object-key file-key})
 
 (deftest lambda-s3-events
   (testing "event->s3-object"
     (let [s3-object (s3/event->s3-object client sample-source-event)]
-      (is (equal? s3-object expected-s3-object)))))
+      (is (equal? s3-object expected-s3-object)
+      (is (equal? (slurp (-> s3-object :content)) "lolbar"))))))
 

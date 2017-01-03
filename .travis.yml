@@ -1,19 +1,9 @@
-sudo: required
-
+sudo: false
 language: clojure
 jdk:
-  - oraclejdk8
-
-services:
-  - docker
-
+- oraclejdk8
 env:
   global:
-      - AWS_ACCESS_KEY_ID=xxxxxxxxxxxx
-      - AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxx
-
-before_install:
-  - docker-compose up -d
-
+  - secure: v4SKc+F7061agShXqa0duzxQ3my3YpzF+1nBCkn2/AfRPpU3I4iy99eIdts3gCgU5UlnsAej39q0w2sjtfnBrJwQxObSjOFLwzIzMFRAI1wB5T/axuO5QKI7VtfD7d8rFYx16Ewd/5stZ7ApQGWzWzNRZgk9WkHGyyuA37rw+F2cJ9mF1JCQSoRv+e/8Bk1vhSlhGGE2go55cNBRCceg3VpDAUYIv9gbsyJlFbwNTfrSviBlNM2VIM2IZdXgV9AqX1nQKB86BXSE5ZTbA5gm2CwYj9eUmT7OcO0NZE6iQS5llOjUJmuPqterU/ChZnDlR7ZR2wf/nOWlhu4Z4YKKJZnRUoHKdVVzf+tpKKTnpz3e/nqoM0e9Tvw19KjcYmz9hBPlGH5UU6mUcw7/D1PmPl8D4dHlthFyqgJ9CrEWHk4HBTzjb5KNiLmmx70mwNswnTxYKqbAJIKVnSJJ5ALdzQ2pF5+OKZTO1DE4gO4LmTkNWoT4Zsum9oaMze6ozJnvKaEfkP9Wcp90IYdR2BBveQYPzxSrK2xqQ5nC7HcdgVcluLwyXrmjL12BMANNqj6HlvK4wx6Po46Vf1B16As1Onr8WHYThl7yzaYXnCPtoznkrWMO8WEWWFVuxGmoP+PUmm2rjQxga6wLXOx6sS+IxIjowKK6xmXNqEXbfTVFvDA=
 script:
-  - lein test
+- lein test
