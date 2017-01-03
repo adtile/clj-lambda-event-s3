@@ -1,8 +1,27 @@
 (ns lambda-event-s3.s3
   (:require [schema.core :as schema]
-            [amazonica.aws.s3 :as s3]
-            [amazonica.aws.s3transfer :as s3transfer]
-            [clojure.string :refer [split split-lines lower-case join] :as string]))
+            [clojure.string :refer [split split-lines lower-case join] :as string]
+            [clj-time.coerce :as c])
+  (:import [com.amazonaws.services.s3 AmazonS3 AmazonS3Client]
+           [com.amazonaws ClientConfiguration]
+           [com.amazonaws.regions Regions]
+           [com.amazonaws.services.s3.model PutObjectRequest]))
+
+(defn create-client [& {:keys [max-connections max-error-retry endpoint region tcp-keep-alive]
+                        :or {max-connections 50 max-error-retry 1 tcp-keep-alive false}}]
+  (let [configuration (-> (ClientConfiguration.)
+                          (.withMaxErrorRetry max-error-retry)
+                          (.withMaxConnections max-connections)
+                          (.withTcpKeepAlive tcp-keep-alive))
+        client (AmazonS3Client. configuration)]
+    (when endpoint
+      (.setEndpoint client endpoint))
+    (if region
+      (.withRegion client (Regions/fromName region))
+      client)))
+
+(defn- fetch-s3-object [client bucket object-key]
+  (.getObject client bucket object-key))
 
 (schema/defschema ResponseElementsSchema
   {:x-amz-id-2 String
@@ -31,12 +50,15 @@
 (schema/defschema RequestParametersSchema
   {:source-ip-address String})
 
+(def aws-regions
+  (apply schema/enum (mapv #(.getName %1) (Regions/values))))
+
 (schema/defschema AWSEventSchema
   {:event-name String ;(schema/enum "ObjectCreated:Put")
    :event-version (schema/enum "2.0")
    :event-source String ;"aws:s3"
    :response-elements ResponseElementsSchema
-   :aws-region (schema/enum "ap-northeast-1" "ap-southeast-1" "ap-southeast-2" "eu-central-1" "eu-west-1" "sa-east-1" "us-east-1" "us-west-1" "us-west-2")
+   :aws-region aws-regions
    :event-time String; "1970-01-01T00:00:00.000Z"
    :user-identity UserIdentitySchema
    :s3 S3Schema
@@ -55,14 +77,15 @@
    last-modified :- org.joda.time.DateTime])
 
 (schema/defn ^:always-validate get-object :- S3Object
-  [target :- S3ObjectDetails]
-  (let [s3-response (s3/get-object (:bucket-name target) (:object-key target))]
-    (->S3Object (-> s3-response :key)
-                (-> s3-response :bucket-name)
-                (-> s3-response :object-content)
-                (-> s3-response :object-metadata :content-length)
-                (-> s3-response :object-metadata :content-type)
-                (-> s3-response :object-metadata :last-modified))))
+  [client :- AmazonS3Client target :- S3ObjectDetails]
+  (let [s3-response (fetch-s3-object client (:bucket-name target) (:object-key target))
+        s3-object-metadata (.getObjectMetadata s3-response)]
+    (->S3Object (.getKey s3-response)
+                (.getBucketName s3-response)
+                (.getObjectContent s3-response)
+                (.getContentLength s3-object-metadata)
+                (.getContentType s3-object-metadata)
+                (c/from-date (.getLastModified s3-object-metadata)))))
 
 (schema/defn ^:always-validate event->s3-fetch :- S3ObjectDetails
   [event :- AWSEventSchema]
@@ -70,8 +93,8 @@
                      (-> event :s3 :bucket :name)))
 
 (schema/defn ^:always-validate event->s3-object :- S3Object
-  [event :- AWSEventSchema]
-  (-> event
-    (event->s3-fetch)
-    (get-object)))
+  [client :- AmazonS3Client event :- AWSEventSchema]
+  (let [s3-fetch (event->s3-fetch event)]
+    (get-object client s3-fetch)))
+
 
