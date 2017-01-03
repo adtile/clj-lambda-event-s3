@@ -1,0 +1,19 @@
+sudo: required
+
+language: clojure
+jdk:
+  - oraclejdk8
+
+services:
+  - docker
+
+env:
+  global:
+      - AWS_ACCESS_KEY_ID=xxxxxxxxxxxx
+      - AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxx
+
+before_install:
+  - docker-compose up -d
+
+script:
+  - lein test
